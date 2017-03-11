@@ -3,6 +3,10 @@
 var express = require('express');
 var router  = express.Router();
 
+var Course  = require('../models/course');
+var Review  = require('../models/review');
+var User    = require('../models/user');
+
 
 /**
  * GET /api/courses
