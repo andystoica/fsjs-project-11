@@ -11,24 +11,17 @@ var User    = require('../models/user');
 /**
  * GET /api/courses
  * 200
- * Returns the Course "_id" and "title" properties
+ * Returns course "_id" and "title" properties of all available courses
  */
 router.get('/courses', function(req, res, next) {
-    let courses = [
-        {
-            _id: 12345,
-            title: 'Couting from One to Five'
-        },
-        {
-            _id: 67890,
-            title: 'And from Six to Zero'
-        },
-        {
-            _id: 99999,
-            title: 'A really Special Course'
-        }
-    ];
-    res.json({ data: courses });
+    Course
+        .find({})
+        .select('title')
+        .exec(function (err, courses) {
+            if (err) return next(err);
+            res.status(200);
+            res.json({ data: courses });
+        });
 });
 
 
@@ -38,7 +31,25 @@ router.get('/courses', function(req, res, next) {
  * Returns all Course properties and related documents for the provided course ID
  */
 router.get('/courses/:id', function(req, res, next) {
-    res.send('GET /api/course/:id 200');
+    Course
+        .findById(req.params.id)
+        .populate({
+            path: 'user',
+            model: 'User'
+        })
+        .populate({
+            path: 'reviews',
+            model: 'Review',
+            populate: {
+                path: 'user',
+                model: 'User'
+            }
+        })
+        .exec(function (err, course) {
+            if (err) return next(err);
+            res.status(200);
+            res.json( { data: [course] });
+        });
 });
 
 

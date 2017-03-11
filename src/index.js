@@ -24,36 +24,42 @@ var User    = require('./models/user');
 
 // mongodb connection
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/course-rating-api');
+mongoose
+  .connect('mongodb://localhost:27017/course-rating-api')
+  .catch(function (err) {
+    console.log('MongoDB: connection error');
+  });
 var db = mongoose.connection;
 
-//mongodb error and connection message handlers
 db.on('error', function (err) {
   console.log('MongoDB: ' + err.message);
 });
 
 db.on('connected', function() {
-  console.log('MongoDB: successfully connected to database')
+  console.log('MongoDB: successfully connected');
 });
 
 db.on('disconnected', function() {
-  console.log('MongoDB: disconnected')
+  console.log('MongoDB: disconnected');
 });
 
-db.once('open', function () {
-//  seeder.seed(seedData).then(function (dbData) {
+// db.once('open', function () {
+// //  seeder.seed(seedData).then(function (dbData) {
     
-    Course
-      .findOne({})
-      .populate('reviews')
-      .exec(function (err, course) {
-        console.log(course.overallRating);
-      });
+//     // Course
+//     //   .findOne({})
+//     //   .populate('user')
+//     //   .populate('reviews')
+//     //   .exec(function (err, course) {
+//     //     Course.populate(course, { path: 'reviews.user', model: 'User' }, function (err, course) {
+//     //       console.log(course.reviews);
+//     //     });
+//     //   });
 
-// }).catch(function (err) {
-//   console.log(err);
+// // }).catch(function (err) {
+// //   console.log(err);
+// // });
 // });
-});
 
 
 /**
