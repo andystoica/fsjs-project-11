@@ -46,16 +46,36 @@ var courseSchema = new Schema({
 
 
 
+// set the 'stepNumber' property to correct number
+courseSchema
+    .pre('save', function(next) {
+        this.steps = this.steps.map(function (step, index) {
+            step.stepNumber = index + 1;
+            return step;
+        });
+        return next();
+    });
+
+
+// step validation, must have at least one step
+courseSchema
+    .path('steps')
+    .validate(function (steps) {
+        return steps.length >= 1;
+    }, 'Each course must have at least one step.');
+
+
 
 // overallRating virtual field
-courseSchema.virtual('overallRating').get(function (){
-    let numReviews = this.reviews.length;
-    let totalScore = 0;
-    this.reviews.forEach(function (review) {
-        totalScore += review.rating;
+courseSchema
+    .virtual('overallRating').get(function (){
+        let numReviews = this.reviews.length;
+        let totalScore = 0;
+        this.reviews.forEach(function (review) {
+            totalScore += review.rating;
+        });
+        return Math.round(totalScore / numReviews);
     });
-    return Math.round(totalScore / numReviews);
-});
 
 
 

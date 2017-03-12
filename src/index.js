@@ -1,6 +1,5 @@
 'use strict';
 
-// load modules
 var express    = require('express');
 var morgan     = require('morgan');
 var apiRouter  = require('./routes/api');
@@ -14,46 +13,6 @@ var Review  = require('./models/review');
 var User    = require('./models/user');
 
 
-
-
-/**
- * Database connection
- */
-
-// mongodb connection
-mongoose.Promise = global.Promise;
-mongoose
-  .connect('mongodb://localhost:27017/course-rating-api')
-  .catch(function (err) {
-    console.log('MongoDB: connection error');
-  });
-var db = mongoose.connection;
-
-db.on('error', function (err) {
-  console.log('MongoDB: ' + err.message);
-});
-
-db.on('connected', function() {
-  console.log('MongoDB: successfully connected');
-});
-
-db.on('disconnected', function() {
-  console.log('MongoDB: disconnected');
-});
-
-
-// ---------------------------------------------
-// var seeder     = require('mongoose-seeder');
-// var seedData   = require('./data/data.json');
-
-// db.once('open', function () {
-//   seeder
-//     .seed(seedData)
-//     .catch(function (err) {
-//       console.log(err);
-//     });
-// });
-//---------------------------------------------
 
 
 /**
@@ -73,19 +32,52 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // setup our static route to serve files from the "public" folder
 app.use('/', express.static('public'));
 
+// mongoose to use standard promises
+mongoose.Promise = global.Promise;
+
 
 
 
 /**
- * Authentication
- * 
- * Checks for Authorization headers, attempts to locate the user and
- * appends the userId to the request if a user is found with a matching
- * password.
+ * Database connection
  */
 
+mongoose
+    .connect('mongodb://localhost:27017/course-rating-api')
+    .catch(function (err) {
+        console.log('MongoDB: connection error');
+    });
+var db = mongoose.connection;
+
+db.on('error', function (err) {
+    console.log('MongoDB: ' + err.message);
+});
+
+db.on('connected', function() {
+    console.log('MongoDB: successfully connected');
+});
+
+db.on('disconnected', function() {
+    console.log('MongoDB: disconnected');
+});
 
 
+
+
+/**
+ * Seeding sample data
+ */
+
+var seeder     = require('mongoose-seeder');
+var seedData   = require('./data/data.json');
+
+db.once('open', function () {
+  seeder
+    .seed(seedData)
+    .catch(function (err) {
+      console.log(err);
+    });
+});
 
 
 
@@ -94,7 +86,6 @@ app.use('/', express.static('public'));
  * Routes
  */
 
-// api routes
 app.use('/api', apiRouter);
 
 
@@ -106,16 +97,15 @@ app.use('/api', apiRouter);
 
 // catch 404 errors and forward to error handler
 app.use(function (req, res, next) {
-  var err = new Error('Document not found');
-  err.status = 404;
-  return next(err);
+    var err = new Error('Document not found');
+    err.status = 404;
+    return next(err);
 });
 
-// error handler
+// global error handler
 app.use(function (err, req, res, next) {
-  // if (res.headerSent) return next(err);
-  res.status(err.status || 500);
-  res.json({ error: err.message || 'Something went wrong' });
+    res.status(err.status || 500);
+    res.json({ error: err.message || 'Something went wrong' });
 });
 
 
@@ -125,7 +115,6 @@ app.use(function (err, req, res, next) {
  * Start the application server
  */
 
-// start listening on our port
 var server = app.listen(app.get('port'), function () {
-  console.log('Express: server listening on port ' + server.address().port);  
+    console.log('Express: server listening on port ' + server.address().port);  
 });

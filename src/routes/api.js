@@ -1,30 +1,14 @@
 'use strict';
 
 /**
- * GET /api/courses | 200
- * Returns the Course "_id" and "title" properties
- * 
- * GET /api/course/:id | 200
- * Returns all Course properties and related documents for the provided course ID
- * 
- * POST /api/courses | 201
- * Creates a course, sets the Location header, and returns no content
- * 
- * PUT /api/courses/:id | 204
- * Updates a course and returns no content
- *
- * GET /api/users | 200
- * Returns the currently authenticated user
- * 
- * POST /api/users | 201
- * Creates a user, sets the Location header to "/", and returns no content
- * 
- * POST /api/courses/:courseId/reviews | 201
- * Creates a review for the specified course ID, sets the Location header
- * to the related course and returns no content
- * 
- * DELETE /api/courses/:courseId/reviews/:id | 204
- * Deletes the specified review and returns no content
+ * GET    200 /api/courses
+ * GET    200 /api/course/:id
+ * POST   201 /api/courses
+ * PUT    204 /api/courses/:id
+ * GET    200 /api/users
+ * POST   201 /api/users
+ * POST   201 /api/courses/:courseId/reviews
+ * DELETE 204 /api/courses/:courseId/reviews/:id
  */
 
 var express = require('express');
@@ -80,7 +64,7 @@ router.get('/courses/:id', function(req, res, next) {
             }
         })
         .exec(function (err, course) {
-            if (err) return next(err);
+            if (err || !course) return next(err);
             res.status(200);
             res.json({ data: [course.toJSON({ virtuals: true })] });
         });
@@ -124,26 +108,37 @@ router.post('/courses', mid.requireAuth, function(req, res, next) {
  * 204
  * Updates a course and returns no content
  */
-router.put('/courses/:id', function(req, res, next) {
+router.put('/courses/:id', mid.requireAuth, function(req, res, next) {
     
-    // Make a new course object
-    let course = new Course(req.body);
+    // Check if the logged in user is the author
+    if (req.body.user
+        && req.body.user._id
+        && req.body.user._id == req.userId) {
 
-    // Attempt to save the new course
-    Course.update({ _id: course._id }, course, function (err) {
-        if (err) {
-            if (err.name === 'ValidationError') {
-                // Handle validation errors
-                res.status(400);
-                res.json(validationErrors(400, err.errors));
+        // Make a new course object
+        let course = new Course(req.body);
+
+        // Attempt to save the new course
+        Course.update({ _id: course._id }, course, function (err) {
+            if (err) {
+                if (err.name === 'ValidationError') {
+                    // Handle validation errors
+                    res.status(400);
+                    res.json(validationErrors(400, err.errors));
+                } else {
+                    return next(err);
+                }
             } else {
-                return next(err);
+                // Set headers and send the response
+                res.status(204).send();
             }
-        } else {
-            // Set headers and send the response
-            res.status(204).send();
-        }
-    });
+        });
+    } else {
+        // Only authors can edit their own courses
+        let err = new Error('Courses can only be edited by their authors');
+        err.status = 401;
+        return next(err);
+    }
 });
 
 
@@ -269,22 +264,39 @@ router.delete('/courses/:courseId/reviews/:id', mid.requireAuth, function(req, r
         .findById(req.params.courseId)
         .exec(function (err, course) {
             if (err) return next(err);
-        
-            // Remove reivew from course
-            course.reviews.pull(req.params.id);
-            course.save(function (err, updated){
-                if (err) return next(err);
 
-                // Remove review from database
-                Review
-                    .remove({ _id: req.params.id })
-                    .exec(function (err) {
-                        if (err) return next(err);
+            // Find the review in the database
+            Review
+                .findById(req.params.id)
+                .exec(function (err, review) {
+                    if (err) return next(err);
 
-                        // Send 204 status and terminate response
-                        res.status(204).send();
-                    });
-            });  
+                    // If is the author of either the course or the review
+                    if (req.userId.equals(course.user) || req.userId.equals(review.user)) {
+
+                        // Remove review from course
+                        course.reviews.pull(req.params.id);
+                        course.save(function (err, updated){
+                            if (err) return next(err);
+
+                            // Remove review from database
+                            Review
+                                .remove({ _id: req.params.id })
+                                .exec(function (err) {
+                                    if (err) return next(err);
+
+                                    // Send 204 status and terminate response
+                                    res.status(204).send();
+                                });
+                        });
+
+                    // Is not authorised to delete
+                    } else {
+                        let err = new Error('Reviews can only be deleted by their authors or course authors.');
+                        err.status = 401;
+                        return next(err);
+                    }
+                });            
         });
 });
 

@@ -19,7 +19,7 @@ var reviewSchema = new Schema({
     },
     rating: {
         type: Number,
-        required: [true, 'Please select a star rating.']
+        required: [true, 'Review must have a rating value.']
     },
     review: {
         type: String
@@ -39,7 +39,7 @@ reviewSchema
 
 
 
-// Rating must be between 1 and 5
+// Validate rating must be between 1 and 5
 reviewSchema
     .path('rating')
     .validate(function (rating) {
