@@ -7,7 +7,6 @@ mongoose.Promise = global.Promise;
 
 
 
-
 var courseSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,

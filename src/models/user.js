@@ -9,7 +9,6 @@ mongoose.Promise = global.Promise;
 
 
 
-
 var userSchema = new Schema({
     fullName: {
         type: String,
@@ -31,7 +30,6 @@ var userSchema = new Schema({
 
 
 
-
 // Encrypt the password before saving to database
 userSchema
     .pre('save', function (next) {
@@ -45,14 +43,12 @@ userSchema
 
 
 
-
 // Validate the email is in correct format
 userSchema
     .path('emailAddress')
     .validate(function (email) {
         return validator.isEmail(email);
     }, 'Email address must be valid');
-
 
 
 

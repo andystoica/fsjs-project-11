@@ -2,8 +2,8 @@
 
 /**
  * GET    200 /api/courses
- * GET    200 /api/course/:id
  * POST   201 /api/courses
+ * GET    200 /api/courses/:id
  * PUT    204 /api/courses/:id
  * GET    200 /api/users
  * POST   201 /api/users
@@ -43,6 +43,36 @@ router.get('/courses', function(req, res, next) {
 
 
 /**
+ * POST /api/courses
+ * 201
+ * Creates a course, sets the Location header, and returns no content
+ */
+router.post('/courses', mid.requireAuth, function(req, res, next) {
+    
+    // Make a new course object
+    let course = new Course(req.body);
+
+    // Attempt to save the new course
+    course.save(function (err) {
+        if (err) {
+            if (err.name === 'ValidationError') {
+                // Handle validation errors
+                res.status(400);
+                res.json(validationErrors(400, err.errors));
+            } else {
+                return next(err);
+            }
+        } else {
+            // Set headers and send the response
+            res.status(201).location('/').send();
+        }
+    });
+});
+
+
+
+
+/**
  * GET /api/course/:id
  * 200
  * Returns all Course properties and related documents for the provided course ID
@@ -68,36 +98,6 @@ router.get('/courses/:id', function(req, res, next) {
             res.status(200);
             res.json({ data: [course.toJSON({ virtuals: true })] });
         });
-});
-
-
-
-
-/**
- * POST /api/courses
- * 201
- * Creates a course, sets the Location header, and returns no content
- */
-router.post('/courses', mid.requireAuth, function(req, res, next) {
-    
-    // Make a new course object
-    let course = new Course(req.body);
-
-    // Attempt to save the new course
-    course.save(function (err) {
-        if (err) {
-            if (err.name === 'ValidationError') {
-                // Handle validation errors
-                res.status(400);
-                res.json(validationErrors(400, err.errors));
-            } else {
-                return next(err);
-            }
-        } else {
-            // Set headers and send the response
-            res.status(201).location('/').send();
-        }
-    });
 });
 
 
@@ -457,5 +457,8 @@ function validationErrors(code, errors) {
         }
     };
 }
+
+
+
 
 module.exports = router;

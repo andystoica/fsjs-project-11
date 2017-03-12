@@ -7,7 +7,6 @@ mongoose.Promise = global.Promise;
 
 
 
-
 var reviewSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,
@@ -28,14 +27,12 @@ var reviewSchema = new Schema({
 
 
 
-
 // Review is always a whole number
 reviewSchema
     .pre('save', function (next) {
         Math.round(this.rating);
         return next();
     });
-
 
 
 
