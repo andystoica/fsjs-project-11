@@ -6,6 +6,7 @@
       "fullName": "Joe Smith",
       "emailAddress": "joe@smith.com",
       "password": "password",
+      "hashedPassword": "password",
       "confirmPassword": "password"
     },
     "samjones": {
@@ -13,6 +14,7 @@
       "fullName": "Sam Jones",
       "emailAddress": "sam@jones.com",
       "password": "password",
+      "hashedPassword": "password",
       "confirmPassword": "password"
     },
     "samsmith": {
@@ -20,6 +22,7 @@
       "fullName": "Sam Smith",
       "emailAddress": "sam@smith.com",
       "password": "password",
+      "hashedPassword": "password",
       "confirmPassword": "password"
     }
   },

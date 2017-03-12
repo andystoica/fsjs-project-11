@@ -6,8 +6,8 @@ var morgan     = require('morgan');
 var apiRouter  = require('./routes/api');
 var bodyParser = require('body-parser');
 var mongoose   = require('mongoose');
-// var seeder     = require('mongoose-seeder');
-// var seedData   = require('./data/data.json');
+var auth       = require('basic-auth');
+var bcrypt     = require('bcrypt');
 
 var app = express();
 
@@ -43,23 +43,19 @@ db.on('disconnected', function() {
   console.log('MongoDB: disconnected');
 });
 
-// db.once('open', function () {
-// //  seeder.seed(seedData).then(function (dbData) {
-    
-//     // Course
-//     //   .findOne({})
-//     //   .populate('user')
-//     //   .populate('reviews')
-//     //   .exec(function (err, course) {
-//     //     Course.populate(course, { path: 'reviews.user', model: 'User' }, function (err, course) {
-//     //       console.log(course.reviews);
-//     //     });
-//     //   });
 
-// // }).catch(function (err) {
-// //   console.log(err);
-// // });
+// ---------------------------------------------
+// var seeder     = require('mongoose-seeder');
+// var seedData   = require('./data/data.json');
+
+// db.once('open', function () {
+//   seeder
+//     .seed(seedData)
+//     .catch(function (err) {
+//       console.log(err);
+//     });
 // });
+//---------------------------------------------
 
 
 /**
@@ -78,6 +74,44 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // setup our static route to serve files from the "public" folder
 app.use('/', express.static('public'));
+
+
+
+
+/**
+ * Authentication
+ * 
+ * Checks for Authorization headers, attempts to locate the user and
+ * appends the userId to the request if a user is found with a matching
+ * password.
+ */
+
+app.use(function (req, res, next) {
+  
+  // check for authorization headers
+  let credentials = auth(req);
+  if (credentials && credentials.name && credentials.pass) {
+    
+    // attepmpt to grab the user account from database
+    User.findOne({ emailAddress: credentials.name })
+        .exec(function (err, user) {
+          if (err || !user) return next();
+    
+          // check for password match
+          bcrypt.compare(credentials.pass, user.hashedPassword, function (err, check) {
+            if (check) {
+              console.log('Authorized!');
+              req.userId = user._id;
+            }
+            return next();
+          });
+        });
+  } else {
+    return next();
+  }
+});
+
+
 
 
 
@@ -105,7 +139,7 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  if (res.headerSent) return next(err);
+  // if (res.headerSent) return next(err);
   res.status(err.status || 500);
   res.json({ error: err.message || 'Something went wrong' });
 });
