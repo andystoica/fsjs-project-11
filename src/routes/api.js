@@ -214,39 +214,67 @@ router.post('/users', function(req, res, next) {
  */
 router.post('/courses/:courseId/reviews', mid.requireAuth, function(req, res, next) {
 
-    // Make a new review object and add the user ID
-    req.body.user = req.userId;
-    let review = new Review(req.body);
-
-    // Save the review
-    review.save(function (err) {
-        
-        // Handle any errors
-        if (err) {
-            if (err.name === 'ValidationError') {
-                // Handle validation errors
-                res.status(400);
-                res.json(validationErrors(400, err.errors));
-            } else {
-                // Any other erors
+    // Prevent the author from reviewing own course
+    Course
+        .findById(req.params.courseId)
+        .populate({
+            path: 'reviews',
+            model: 'Review'
+        })
+        .exec(function (err, course) {
+            if (err) return next(err);
+            if (course.user.equals(req.userId)) {
+                let err = new Error('Can not review own course.');
+                err.status = 400;
                 return next(err);
             }
 
-        // Get the course from database
-        } else {
-            Course.findOne({ _id: req.params.courseId }, function (err, course) {
-                if (err) return next(err);
+            // Prevent multiple reviews by the same user
+            for (let i = 0; i < course.reviews.length; i++) {
+                console.log(course.reviews[i].user);
+                if (req.userId.equals(course.reviews[i].user)) {
+                    let err = new Error('Can only review each course once.');
+                    err.status = 400;
+                    return next(err);
+                }
+            }
+
+            // Otherwise proceed with adding the review
+            // Make a new review object and add the user ID
+            req.body.user = req.userId;
+            let review = new Review(req.body);
+
+            // Save the review
+            review.save(function (err) {
                 
-                // Link review to course and save
-                course.reviews.push(review._id);
-                course.save(function (err, updated) {
-                    if (err) return next(err);                    
-                    // Set headers to redirect to article location
-                    res.status(201).location('/courses/' + updated._id).send();
-                });
+                // Handle any errors
+                if (err) {
+                    if (err.name === 'ValidationError') {
+                        // Handle validation errors
+                        res.status(400);
+                        res.json(validationErrors(400, err.errors));
+                    } else {
+                        // Any other erors
+                        return next(err);
+                    }
+
+                // Get the course from database and link review
+                } else {
+                    Course.findOne({ _id: req.params.courseId }, function (err, course) {
+                        if (err) return next(err);
+                        
+                        // Link review to course and save
+                        course.reviews.push(review._id);
+                        course.save(function (err, updated) {
+                            if (err) return next(err);                    
+                            // Set headers to redirect to article location
+                            res.status(201).location('/courses/' + updated._id).send();
+                        });
+                    });
+                }
             });
-        }
-    });
+
+        });
 });
 
 
@@ -298,6 +326,106 @@ router.delete('/courses/:courseId/reviews/:id', mid.requireAuth, function(req, r
                     }
                 });            
         });
+});
+
+
+/**
+ * Routes not implemented
+ */
+
+// /api/courses
+// PUT    403 - Cannot edit a collection of courses.
+// DELETE 403 - Cannot delete a collection of courses.
+
+router.put('/courses', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot edit a collection of courses.'
+    });
+});
+
+router.delete('/courses', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot delete a collection of courses.'
+    });
+});
+
+
+// /api/courses/:id
+// POST   405 - Use the '/api/courses' route to create a course.
+// DELETE 403 - Cannot delete a course.
+
+router.post('/courses/:id', function (req, res, next) {
+    res.set('Allow', 'GET, PUT');
+    return res.status(405).json({
+        error: 'Use the `/api/courses` route to create a course.'
+    });
+});
+
+router.delete('/courses/:id', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot delete a course.'
+    });
+});
+
+
+// /api/users
+// PUT    403 - Cannot edit a collection of users.
+// DELETE 403 - Cannot delete a collection of users.
+
+router.put('/users', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot edit a collection of users.'
+    });
+});
+
+router.delete('/users', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot delete a collection of users.'
+    });
+});
+
+
+// /api/courses/:courseId/reviews
+// PUT    403 - Cannot edit a collection of reviews.
+// DELETE 403 - Cannot delete a collection of reviews.
+
+router.put('/courses/:courseId/reviews', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot edit a collection of reviews.'
+    });
+});
+
+router.delete('/courses/:courseId/reviews', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot delete  a collection of reviews.'
+    });
+});
+
+
+// /api/courses/:courseId/reviews/:id
+// GET  403 - Cannot get a single review.
+//            Use the '/api/courses/:id' route instead to get the
+//            reviews for a specific course.
+// POST 405 - Use the '/api/courses/:courseId/reviews' route to create a review.
+// PUT  403 - Cannot edit a review.
+
+router.get('/courses/:courseId/reviews/:id', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot get a single review. Use the `/api/courses/:id` route instead to get the reviews for a specific course.'
+    });
+});
+
+router.post('/courses/:courseid/reviews/:id', function (req, res, next) {
+    res.set('Allow', 'DELETE');
+    return res.status(405).json({
+        error: 'Use the `/api/courses/:courseId/reviews` route to create a review.'
+    });
+});
+
+router.put('/courses/:courseid/reviews/:id', function (req, res, next) {
+    return res.status(403).json({
+        error: 'Cannot edit a review.'
+    });
 });
 
 

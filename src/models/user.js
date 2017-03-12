@@ -56,5 +56,15 @@ userSchema
 
 
 
+// Password minimum requirements
+userSchema
+    .path('hashedPassword')
+    .validate(function (password) {
+        return password.length >= 8;
+    }, 'Password must be at least 8 characters long.');
+
+
+
+
 var User = mongoose.model('User', userSchema);
 module.exports = User;
