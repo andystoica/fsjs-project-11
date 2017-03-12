@@ -6,6 +6,8 @@ var Schema   = mongoose.Schema;
 mongoose.Promise = global.Promise;
 
 
+
+
 var reviewSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,
@@ -17,14 +19,15 @@ var reviewSchema = new Schema({
     },
     rating: {
         type: Number,
-        min: 1,
-        max: 5,
-        required: [true, 'Each review must have a rating between 1 and 5.']
+        required: [true, 'Please select a star rating.']
     },
     review: {
         type: String
     }
 });
+
+
+
 
 // Review is always a whole number
 reviewSchema
@@ -32,6 +35,18 @@ reviewSchema
         Math.round(this.rating);
         return next();
     });
+
+
+
+
+// Rating must be between 1 and 5
+reviewSchema
+    .path('rating')
+    .validate(function (rating) {
+        return (rating >= 1 && rating <= 5);
+    }, 'Rating must be a number between 1 and 5.');
+
+
 
 
 var Review = mongoose.model('Review', reviewSchema);

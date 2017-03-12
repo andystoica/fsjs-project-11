@@ -30,6 +30,8 @@ var userSchema = new Schema({
 });
 
 
+
+
 // Encrypt the password before saving to database
 userSchema
     .pre('save', function (next) {
@@ -42,6 +44,8 @@ userSchema
 });
 
 
+
+
 // Validate the email is in correct format
 userSchema
     .path('emailAddress')
@@ -49,25 +53,6 @@ userSchema
         return validator.isEmail(email);
     }, 'Email address must be valid');
 
-
-
-// Authenticate user
-userSchema
-    .statics.authenticate = function (email, password, callback) {
-        User.findOne({ emailAddress: email })
-            .exec(function (err, user) {
-                if (err) return callback(err);
-                else if (!user) {
-                    let err = new Error('User not found.');
-                    err.status = 401;
-                    return callback(err);
-                }
-                bcrypt.compare(password, user.hashedPassword, function (err, result) {
-                    if (result) return callback(null, user);
-                    else return callback();
-                });
-            });
-    }
 
 
 

@@ -119,7 +119,6 @@ router.post('/courses', mid.requireAuth, function(req, res, next) {
 
 
 
-
 /**
  * PUT /api/courses/:id
  * 204
@@ -154,6 +153,7 @@ router.put('/courses/:id', function(req, res, next) {
  * GET /api/users
  * 200
  * Returns the currently authenticated user
+ * { fullName, emailAddress }
  */
 router.get('/users', mid.requireAuth, function(req, res, next) {
 

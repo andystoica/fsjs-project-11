@@ -6,8 +6,6 @@ var morgan     = require('morgan');
 var apiRouter  = require('./routes/api');
 var bodyParser = require('body-parser');
 var mongoose   = require('mongoose');
-var auth       = require('basic-auth');
-var bcrypt     = require('bcrypt');
 
 var app = express();
 
@@ -86,30 +84,6 @@ app.use('/', express.static('public'));
  * password.
  */
 
-app.use(function (req, res, next) {
-  
-  // check for authorization headers
-  let credentials = auth(req);
-  if (credentials && credentials.name && credentials.pass) {
-    
-    // attepmpt to grab the user account from database
-    User.findOne({ emailAddress: credentials.name })
-        .exec(function (err, user) {
-          if (err || !user) return next();
-    
-          // check for password match
-          bcrypt.compare(credentials.pass, user.hashedPassword, function (err, check) {
-            if (check) {
-              console.log('Authorized!');
-              req.userId = user._id;
-            }
-            return next();
-          });
-        });
-  } else {
-    return next();
-  }
-});
 
 
 

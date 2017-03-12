@@ -7,6 +7,7 @@ mongoose.Promise = global.Promise;
 
 
 
+
 var courseSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,
@@ -14,11 +15,11 @@ var courseSchema = new Schema({
     },
     title: {
         type: String,
-        required: [true, 'A course must have a title']
+        required: [true, 'A course must have a title.']
     },
     description: {
         type: String,
-        required: [true, 'A course must have a description']
+        required: [true, 'A course must have a description.']
     },
     estimatedTime: {
         type: String
@@ -30,11 +31,11 @@ var courseSchema = new Schema({
         stepNumber: Number,
         title: {
             type: String,
-            required: [true, 'Each step must have a title']
+            required: [true, 'Each step must have a title.']
         },
         description: {
             type: String,
-            required: [true, 'Each step must have a description']
+            required: [true, 'Each step must have a description.']
         }
     }],
     reviews: [{
@@ -45,6 +46,8 @@ var courseSchema = new Schema({
 
 
 
+
+// overallRating virtual field
 courseSchema.virtual('overallRating').get(function (){
     let numReviews = this.reviews.length;
     let totalScore = 0;
@@ -53,6 +56,7 @@ courseSchema.virtual('overallRating').get(function (){
     });
     return Math.round(totalScore / numReviews);
 });
+
 
 
 
